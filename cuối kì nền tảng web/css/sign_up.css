@@ -1,0 +1,33 @@
+body{
+    margin: 0;  
+    background-color: #2f392d;
+}
+form{
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-items: center;
+    background-color: rgb(73, 184, 147);
+    border: 2px solid palegoldenrod;
+    width: 300px;
+    margin-top: 100px;
+}
+
+.input{
+    display: flex;
+    flex-direction: column;
+    color: rgb(122, 33, 33);
+    width: 200px;
+    margin: 10px;
+}
+button{
+    width: 100px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+h1{
+    color: rgb(67, 64, 155);
+}
+label{
+    font-weight: bold;
+}
