@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () =>{
         submit.addEventListener("click", ()=>{
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
-            const confirm_password = document.getElementById("confirm-password").value;
+            const confirm_password = document.getElementById("confirm_password").value;
             if(email.trim() ==="" || password.trim() ==="" || confirm_password.trim() ===""){
                 alert("Vui lòng nhập đầy đủ dữ liệu!");
                 return;
@@ -64,5 +64,6 @@ document.addEventListener("DOMContentLoaded", () =>{
 
         })
     }
+
 
 });
