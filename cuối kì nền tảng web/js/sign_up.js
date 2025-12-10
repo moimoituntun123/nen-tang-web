@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () =>{
                         role: "user"
                     });
                     localStorage.setItem("users", JSON.stringify(users))
-                    alert("Đăng nhập thành công!");
+                    alert("Đăng kí thành công!");
                     window.location.href="../html/sign-in.html"
                 };
             }
@@ -67,3 +67,4 @@ document.addEventListener("DOMContentLoaded", () =>{
 
 
 });
+
