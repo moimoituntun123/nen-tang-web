@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const dalogin = el('dalogin');
-const khach = el('khach');
 const tenUser = el('tenuser');
 const dangXuat = el('dangxuat');
 const quanLyTaiKhoan = el('qltk');
@@ -356,3 +355,4 @@ if (el('globalSearch')) {
     }
   });
 }
+
