@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Drive</title>
+  <link rel="stylesheet" href="/css/trangchu.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">D</div>
+      <div>
+        <div class="title">My Drive</div>
+        <div class="muted">Lưu trữ cá nhân — lưu trên local</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="search" id="globalSearch" placeholder="Tìm kiếm..." />
+      <select id="mode">
+        <option value="light">Sáng</option>
+        <option value="dark">Tối</option>
+      </select>
+
+      <div id="dalogin" style="display:none;align-items:center;gap:8px">
+        <div id="tenuser" class="muted"></div>
+        <button class="ghost" id="dangxuat">Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <aside class="sidebar">
+      <div class="actions">
+        <button class="btn" id="newfolder">Thư mục mới</button>
+        <button class="btn" id="newfile">Tạo File</button>
+      </div>
+
+      <div class="tree" id="dsFile" aria-label="Danh sách file"></div>
+
+      <div style="margin-top:12px;border-top:1px dashed rgba(0,0,0,0.06);padding-top:10px">
+        
+        <div id="thongke" style="margin-top:6px">Thống kê file</div>
+        <a id="qltk" style="margin-top:6px;display:none;cursor:pointer" href="/html/account_management.html">Quản lý tài khoản</a>
+      </div>
+    </aside>
+
+    <section class="panel benphai">
+      <h3 id="panelTitle">Danh sách</h3>
+      <div id="filesArea" class="files-grid"></div>
+    </section>
+  </main>
+
+  <div id="contextMenu" class="context-menu" aria-hidden="true">
+    <button id="openOption">Mở</button>
+    <button id="renameOption">Đổi tên</button>
+    <button id="deleteOption">Xóa</button>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <strong id="modalTitle">Chỉnh sửa file</strong>
+        <div>
+          <button class="ghost" id="modalClose">Đóng</button>
+        </div>
+      </header>
+      <textarea id="fileContent" placeholder="Nội dung..."></textarea>
+      <div style="margin-top:10px;text-align:right">
+        <button class="btn" id="saveContent">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/trangchu.js"></script>
+</body>
+</html>

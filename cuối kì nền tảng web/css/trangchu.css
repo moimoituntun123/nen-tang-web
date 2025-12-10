@@ -1,0 +1,239 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f4f4;
+    color: #333;
+}
+
+header {
+    width: 100%;
+    padding: 10px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    background: #0ea5a3;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+a{
+    text-decoration: none;
+    color: #9f9b9b;
+}
+
+input[type="search"], select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+}
+
+.btn {
+    background: #0ea5a3;
+    color: white;
+}
+
+#dangnhap{
+    margin-left: 20px;
+}
+
+.ghost {
+    background: #e6e6e6;
+}
+
+.container {
+    width: 95%;
+    max-width: 1100px;
+    margin: 20px auto;
+    display: flex;
+    gap: 20px;
+}
+
+.sidebar {
+    width: 280px;
+    background: white;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.search-row {
+    margin: 10px 0;
+}
+
+.tree {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.node-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.node-item:hover {
+    background: #e7f8f7;
+}
+
+.node-item.active {
+    background: #c7f0ee;
+    font-weight: bold;
+}
+
+.panel {
+    flex: 1;
+    background: white;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.files-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.file-card {
+    padding: 10px;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.file-card .name {
+    font-weight: bold;
+}
+
+.context-menu {
+    position: absolute;
+    display: none;
+    background: white;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    z-index: 9999;
+}
+
+.context-menu button {
+    display: block;
+    width: 150px;
+    padding: 8px;
+    text-align: left;
+    border: none;
+    background: white;
+}
+
+.context-menu button:hover {
+    background: #eee;
+}
+
+/* MODAL */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: white;
+    padding: 12px;
+    width: 500px;
+    border-radius: 6px;
+}
+
+.modal textarea {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* DARK MODE */
+body.dark {
+    background: #1e1e1e;
+    color: #eee;
+}
+
+body.dark header,
+body.dark .sidebar,
+body.dark .panel {
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+body.dark .file-card {
+    background: #333;
+    border-color: #555;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+    background: #2a2a2a;
+    color: white;
+    border-color: #555;
+}
+
+#dsFile .root-label {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #0a6;
+  font-weight: 600;
+}
+#dsFile .root-label:hover {
+  background: #e7f8f7;
+}
+#dsFile .root-label.active {
+  background: #c7f0ee;
+}
+

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quản lý tài khoản</title>
+  <link rel="stylesheet" href="/css/account_management.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">My Drive — Quản lý tài khoản</div>
+    <div class="horizontal">
+      <div id="adminInfo" class="admin-info" aria-live="polite"></div>
+      <button id="btn_log_out">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Danh sách tài khoản</h2>
+      <div id="tableWrap">
+        <table id="accountsTable" class="accounts">
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Email</th>
+              <th>Vai trò</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows injected here -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="backBtn" class="ghost">Quay lại</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/account_management.js"></script>
+</body>
+</html>
