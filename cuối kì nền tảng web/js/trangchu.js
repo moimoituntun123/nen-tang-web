@@ -1,358 +1,445 @@
-// helpers
-const el = id => document.getElementById(id);
-const q = s => document.querySelector(s);
-const generateId = () => 'id_' + Math.random().toString(36).slice(2,9);
-
 // theme
-const mode = el('mode');
-if (mode) {
-  mode.addEventListener('change', () => {
-    if (mode.value === 'dark') document.body.classList.add('dark');
-    else document.body.classList.remove('dark');
-    localStorage.setItem('theme', mode.value);
-  });
+const mode = document.getElementById("mode");
+if (mode){
+    mode.addEventListener("change", () => {
+        if (mode.value === "dark"){
+            document.body.classList.add("dark");
+        }
+        else {
+            document.body.classList.remove("dark");
+        }
+        localStorage.setItem("theme", mode.value);
+    });
 }
-document.addEventListener('DOMContentLoaded', () => {
-  const t = localStorage.getItem('theme') || 'light';
-  if (mode) mode.value = t;
-  if (t === 'dark') document.body.classList.add('dark');
+document.addEventListener("DOMContentLoaded", () => {
+    const t = localStorage.getItem("theme") || "light";
+    if(mode){
+        mode.value = t;         
+    }
+    if (t === "dark") {
+        document.body.classList.add("dark");
+    }
 });
 
-const dalogin = el('dalogin');
-const tenUser = el('tenuser');
-const dangXuat = el('dangxuat');
-const quanLyTaiKhoan = el('qltk');
-if (dangXuat) dangXuat.addEventListener('click', () => { 
-  localStorage.removeItem('sign_in');
-  window.location.href = '/html/sign-in.html';
+const dalogin = document.getElementById("dalogin");
+const tenUser = document.getElementById("tenuser");
+const dangXuat = document.getElementById("dangxuat");
+const quanLyTaiKhoan = document.getElementById("qltk");
 
-});
-
-// đọc phiên login từ localStorage
-let account = JSON.parse(localStorage.getItem('sign_in'));
-
+let account = JSON.parse(localStorage.getItem("sign_in"));
 function ensureLoggedIn() {
-  if (!account) {
-    alert('Vui lòng đăng nhập để truy cập trang này!');
-    window.location.href = '/html/sign-in.html';
-    throw new Error('No active session. Redirecting to sign-in.');
-  }
-  return true;
+    if (!account) {
+        alert("Vui lòng đăng nhập để truy cập trang này!");
+        window.location.href = "/html/sign-in.html";
+        throw new Error("Chưa đăng nhập");
+    }
 }
 ensureLoggedIn();
-
-if (account) {
-  if (dalogin) dalogin.style.display = 'flex';
-  if (tenUser) tenUser.textContent = account.email + ' (' + account.role.toUpperCase() + ')';
-  if (account.role === 'admin' && quanLyTaiKhoan) { quanLyTaiKhoan.style.display = 'block'; }
-} else {
-  if (dalogin) dalogin.style.display = 'none';
+function hienThongTinUser() {
+    if (!account) return;
+    dalogin.style.display = "flex";
+    tenUser.textContent = `${account.email} (${account.role.toUpperCase()})`;
+    if (account.role === "admin") {
+        quanLyTaiKhoan.style.display = "block";
+    }
 }
-
-// filesystem default
+if (dangXuat) {
+    dangXuat.addEventListener("click", () => {
+        localStorage.removeItem("sign_in");
+        window.location.href = "/html/sign-in.html";
+    });
+}
+hienThongTinUser();
+// filesystem
+// cây thư mục ban đầu
 const CAY_BAN_DAU = {
-  id: 'root',
-  name: 'root',
-  type: 'folder',
-  children: []
+    id: "root",
+    name: "root",
+    type: "folder",
+    children: []
 };
 
-function getFSKey() { return account && account.email ? 'filesystem_' + account.email : null; }
-function layFS() {
-  const key = getFSKey();
-  if (!key) return structuredClone(CAY_BAN_DAU);
-  const s = localStorage.getItem(key);
-  try { return s ? JSON.parse(s) : structuredClone(CAY_BAN_DAU); }
-  catch (e) { console.error(e); return structuredClone(CAY_BAN_DAU); }
-}
-function luuFS() { const key = getFSKey(); if (!key) return; localStorage.setItem(key, JSON.stringify(filesystem)); }
-
-let filesystem = layFS();
-let currentFolder = filesystem;
+let filesystem;
+let currentFolder;
 let selectedNode = null;
-
-function findNodeById(id, node = filesystem) {
-  if (node.id === id) return node;
-  if (node.children) for (const c of node.children) {
-    const f = findNodeById(id, c);
-    if (f) return f;
-  }
-  return null;
+let nodeDangChuotPhai = null;
+let tuKhoaTimKiem = "";
+function getFSKey() {
+    return account?.email ? "filesystem_" + account.email : null;
 }
 
+function loadFS() {
+    const key = getFSKey();
+    if (!key) return structuredClone(CAY_BAN_DAU);
+    try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : structuredClone(CAY_BAN_DAU);
+    } catch {
+        return structuredClone(CAY_BAN_DAU);
+    }
+}
+
+function luuFS() {
+    const key = getFSKey();
+    if (key) {
+        localStorage.setItem(key, JSON.stringify(filesystem));
+    }
+}
+filesystem = loadFS();
+currentFolder = filesystem;
+
+
+// tạo file/folder
 function renderTree() {
-  const container = el('dsFile');
-  if (!container) return;
-  container.innerHTML = '';
-
-  // Tạo label root (click được)
-  const rootEl = document.createElement('div');
-  rootEl.className = 'root-label';
-  rootEl.style.padding = '6px 10px';
-  rootEl.textContent = 'Root';
-  rootEl.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    // về root
-    currentFolder = filesystem;
-    // highlight: remove active class then add to root label
-    document.querySelectorAll('.node-item').forEach(n => n.classList.remove('active'));
-    // xử lý active cho root label
-    document.querySelectorAll('#dsFile .root-label').forEach(r => r.classList.remove('active'));
-    rootEl.classList.add('active');
-    showFolderContent(filesystem);
-  });
-  container.appendChild(rootEl);
-
-  function walk(node, depth = 0) {
-    if (!node.children) return;
-    node.children.forEach(child => {
-      const item = document.createElement('div');
-      item.className = 'node-item';
-      item.style.paddingLeft = (12 + depth * 12) + 'px';
-      item.dataset.id = child.id;
-      item.innerHTML = `${child.type === 'folder' ? '📁' : '📄'} <span style="margin-left:6px">${child.name}</span>`;
-
-      item.addEventListener('click', (ev) => {
+    const container = document.getElementById("dsFile");
+    if (!container) return;
+    container.innerHTML = "";
+     // Tạo label root (click được)
+    const rootEl = document.createElement('div');
+    rootEl.className = 'root-label';
+    rootEl.style.padding = '6px 10px';
+    rootEl.textContent = 'Root';
+    rootEl.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        // remove active from others
+        // về root
+        currentFolder = filesystem;
+        // highlight: remove active class then add to root label
         document.querySelectorAll('.node-item').forEach(n => n.classList.remove('active'));
+        // xử lý active cho root label
         document.querySelectorAll('#dsFile .root-label').forEach(r => r.classList.remove('active'));
-        item.classList.add('active');
-
-        if (child.type === 'folder') {
-          currentFolder = child;
-          showFolderContent(child);
-        } else openFile(child);
-      });
-
-      item.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        showContextMenu(ev.pageX, ev.pageY, child);
-      });
-
-      container.appendChild(item);
-      if (child.type === 'folder') walk(child, depth + 1);
+        rootEl.classList.add('active');
+        showFolderContent(filesystem);
     });
-  }
+    container.appendChild(rootEl);
 
-  walk(filesystem, 0);
-}
+    function walk(node, depth) {
+        if (!node.children) return;
+        for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            // tìm kiếm
+            let coConKhop = false;
+            if (child.type === "folder") {
+                for (let j = 0; j < child.children.length; j++) {
+                    if (tenKhop(child.children[j])) {
+                        coConKhop = true;
+                        break;
+                    }
+                }
+            }
+            if (!tenKhop(child) && !coConKhop) continue;
 
+            const item = document.createElement("div");
+            item.textContent = (child.type === "folder" ? "📁 " : "📄 ") + child.name;
+            item.style.paddingLeft = (12 + depth * 12) + "px";
+            item.addEventListener("click", () => {
+                if (child.type === "folder") {
+                    currentFolder = child;
+                    showFolderContent(child);
+                }
+            });
 
-function showFolderContent(folder) {
-  if (!folder) return;
-  currentFolder = folder;
-  if (el('panelTitle')) el('panelTitle').textContent = 'Thư mục: ' + folder.name;
-  const area = el('filesArea');
-  if (!area) return;
-  area.innerHTML = '';
-  if (!folder.children || !folder.children.length) {
-    area.innerHTML = '<div class="muted">(Không có file hoặc thư mục con)</div>';
-    return;
-  }
+            item.addEventListener("dblclick", () => {
+                if (child.type === "file") moFile(child);
+            });
 
-  folder.children.forEach(child => {
-    const card = document.createElement('div');
-    card.className = 'file-card';
+            item.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                nodeDangChuotPhai = child;
+                hienContextMenu(e.pageX, e.pageY);
+            });
 
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    const left = document.createElement('div');
-    left.innerHTML = `${child.type === 'folder' ? '📁' : '📄'} <div class="name">${child.name}</div>`;
-    const right = document.createElement('div');
-    right.innerHTML = `<small>${child.type}</small>`;
-    meta.appendChild(left); meta.appendChild(right);
-    card.appendChild(meta);
-
-    const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '8px';
-
-    const openBtn = document.createElement('button'); openBtn.className = 'ghost'; openBtn.textContent = 'Mở';
-    openBtn.onclick = () => { if (child.type === 'folder') { currentFolder = child; renderTree(); showFolderContent(child); } else openFile(child); };
-
-    const delBtn = document.createElement('button'); delBtn.className = 'ghost'; delBtn.textContent = 'Xóa';
-    delBtn.onclick = () => { if (confirm('Xóa ' + child.name + '?')) deleteNode(child.id); };
-
-    // append buttons to actions and card
-    actions.appendChild(openBtn);
-    actions.appendChild(delBtn);
-    card.appendChild(actions);
-    area.appendChild(card);
-  });
-}
-
-function openFile(node) {
-  selectedNode = node;
-  const modalTitle = el('modalTitle');
-  if (modalTitle) modalTitle.textContent = node.name;
-  const fileContent = el('fileContent');
-  if (fileContent) fileContent.value = node.content || '';
-  const modal = el('modalBackdrop');
-  if (modal) modal.style.display = 'flex';
-}
-
-// context menu
-const context = el('contextMenu');
-function showContextMenu(x, y, node) {
-  selectedNode = node;
-  if (!context) return;
-  context.style.left = Math.min(x, window.innerWidth - 200) + 'px';
-  context.style.top = Math.min(y, window.innerHeight - 140) + 'px';
-  context.style.display = 'block';
-  context.setAttribute('aria-hidden', 'false');
-}
-document.addEventListener('click', (e) => { if (context && !context.contains(e.target)) { context.style.display = 'none'; context.setAttribute('aria-hidden', 'true'); } });
-
-if (el('openOption')) {
-  el('openOption').addEventListener('click', () => {
-    if (selectedNode) {
-      if (selectedNode.type === 'folder') { currentFolder = selectedNode; renderTree(); showFolderContent(selectedNode); }
-      else openFile(selectedNode);
+            container.appendChild(item);
+            if (child.type === "folder") {
+                walk(child, depth + 1);
+            }
+        }
     }
-    if (context) context.style.display = 'none';
-  });
+    walk(filesystem, 0);
 }
-if (el('renameOption')) {
-  el('renameOption').addEventListener('click', () => {
-    if (!selectedNode) return;
-    const n = prompt('Tên mới:', selectedNode.name);
-    if (n && n.trim()) { selectedNode.name = n.trim(); luuFS(); renderTree(); showFolderContent(currentFolder); }
-    if (context) context.style.display = 'none';
-  });
-}
-if (el('deleteOption')) {
-  el('deleteOption').addEventListener('click', () => {
-    if (!selectedNode) return;
-    if (selectedNode.id === 'root') { alert('Không thể xóa root'); return; }
-    if (confirm('Xóa ' + selectedNode.name + '?')) { deleteNode(selectedNode.id); }
-    if (context) context.style.display = 'none';
-  });
-}
-
-function deleteNode(id, parent = filesystem) {
-  if (!parent.children) return false;
-  for (let i = 0; i < parent.children.length; i++) {
-    if (parent.children[i].id === id) {
-      parent.children.splice(i, 1);
-      luuFS();
-      renderTree();
-      showFolderContent(currentFolder);
-      return true;
+renderTree();
+// hiển thị folder/file
+function showFolderContent(folder){
+    const area = document.getElementById("filesArea");
+    if (!area){
+        return;
     }
-    if (parent.children[i].type === 'folder') {
-      const r = deleteNode(id, parent.children[i]);
-      if (r) return true;
+    area.innerHTML = "";
+    selectedNode = null;
+
+    if (!folder.children || folder.children.length === 0){
+        area.textContent = "Thư mục trống";
+        return;
     }
-  }
-  return false;
-}
+    for (let i = 0; i < folder.children.length; i++){
+        const child = folder.children[i];
+        const line = document.createElement("div");
+        line.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            nodeDangChuotPhai = child;
+            hienContextMenu(e.pageX, e.pageY);
+        });
+        if (child.type === "folder"){
+            line.textContent = "📁 " + child.name;
+        }
+        else {
+            line.textContent = "📄 " + child.name;
+        }
+        line.style.cursor = "pointer";
+        line.style.padding = "4px";
 
-// create
-if (el('newfile')) {
-  el('newfile').addEventListener('click', () => {
-    if (!account) { alert('Đăng nhập để tạo'); return; }
-    const name = prompt('Tên file:'); if (!name) return;
-    if (currentFolder.type !== 'folder') { alert('Chọn thư mục để tạo'); return; }
-    currentFolder.children = currentFolder.children || [];
-    const item = { id: generateId(), name: name, type: 'file', content: '' };
-    currentFolder.children.push(item); luuFS(); renderTree(); showFolderContent(currentFolder);
-  });
+        line.addEventListener("click", () => {
+            const allLines = area.children;
+            for (let j = 0; j < allLines.length; j++){
+                allLines[j].style.background = "";
+            }
+            line.style.background = "#d0ebff";
+            selectedNode = child;
+            console.log("Đã chọn:", child.name);
+        });
+        // thêm sk doubleclick
+        line.addEventListener("dblclick", () => {
+            if (child.type === "file"){
+                moFile(child);
+            }
+        });
+        area.appendChild(line);
+    }
 }
-if (el('newfolder')) {
-  el('newfolder').addEventListener('click', () => {
-    if (!account) { alert('Đăng nhập để tạo'); return; }
-    const name = prompt('Tên thư mục:'); if (!name) return;
-    if (currentFolder.type !== 'folder') { alert('Chọn thư mục để tạo'); return; }
-    currentFolder.children = currentFolder.children || [];
-    const item = { id: generateId(), name: name, type: 'folder', children: [] };
-    currentFolder.children.push(item); luuFS(); renderTree(); showFolderContent(currentFolder);
-  });
-}
+// mo file
+function moFile(file){
+    selectedNode = file;
+    const modal = document.getElementById("modalBackdrop");
+    const tieuDe = document.getElementById("modalTitle");
+    const oNhap = document.getElementById("fileContent");
 
-// modal save
-if (el('modalClose')) el('modalClose').addEventListener('click', () => { const m = el('modalBackdrop'); if (m) m.style.display = 'none'; });
-if (el('saveContent')) el('saveContent').addEventListener('click', () => {
-  if (!selectedNode) { alert('Không có file'); return; }
-  const fc = el('fileContent');
-  selectedNode.content = fc ? fc.value : (selectedNode.content || '');
-  luuFS();
-  const m = el('modalBackdrop'); if (m) m.style.display = 'none';
-  alert('Đã lưu');
+    if (!modal || !oNhap){
+        return;
+    }
+    tieuDe.textContent = "Chỉnh sửa: " + file.name;
+    if (file.content){
+        oNhap.value = file.content;
+    }
+    else {
+        oNhap.value = "";
+    }
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    console.log("Đang mở file:", file.name);
+}
+// đóng file
+const nutDong = document.getElementById("modalClose");
+if (nutDong){
+    nutDong.addEventListener("click", () => {
+        const modal = document.getElementById("modalBackdrop");
+        if (modal){
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+// lưu nội dung file
+const nutLuu = document.getElementById("saveContent");
+if (nutLuu){
+    nutLuu.addEventListener("click", () => {
+        if (!selectedNode || selectedNode.type !== "file"){
+            alert("Không có file nào được chọn");
+            return;
+        }
+        const oNhap = document.getElementById("fileContent");
+        selectedNode.content = oNhap.value;
+        luuFS();
+
+        const modal = document.getElementById("modalBackdrop");
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+
+        alert("Đã lưu file");
+        console.log("Đã lưu:", selectedNode.name);
+    });
+}
+// hiện contextmenu
+function hienContextMenu(x, y) {
+    const menu = document.getElementById("contextMenu");
+    if (!menu) return;
+    menu.style.display = "block";
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+    menu.setAttribute("aria-hidden", "false");
+}
+// ẩn contextmenu
+document.addEventListener("click", () => {
+    const menu = document.getElementById("contextMenu");
+    if (menu) {
+        menu.style.display = "none";
+        menu.setAttribute("aria-hidden", "true");
+    }
 });
 
-// initial
-renderTree(); showFolderContent(filesystem);
-
-// thongke
-function countFiles(node) {
-  if (!node) return 0;
-  if (node.type === "file") return 1;
-
-  let total = 0;
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      total += countFiles(child);
+function taoId(){
+    return "id_" + Date.now();
+}
+function taoThuMucMoi(){
+    if (!currentFolder){
+        alert("Không xác định được thư mục hiện tại");
+        return;
     }
-  }
-  return total;
-}
 
-
-function countFolders(node) {
-  if (!node) return 0;
-
-  let total = 0;
-
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      if (child.type === "folder") {
-        total += 1;                     
-        total += countFolders(child);   
-      }
+    const ten = prompt("Nhập tên thư mục mới:");
+    if (ten === null){
+        return; // bấm Cancel
     }
-  }
-  return total;
-}
-
-function getFsStats(root) {
-  return {
-    files: countFiles(root),
-    folders: countFolders(root)
-  };
-}
-
-if (q('#thongke')) {
-  q('#thongke').addEventListener('click', () => {
-    const stats = getFsStats(filesystem);
-
-    alert(
-      ` Thống kê hệ thống:
-- Tổng FILE: ${stats.files}
-- Tổng FOLDER: ${stats.folders}`
-    );
-  });
-}
-
-// search filter
-if (el('globalSearch')) {
-  el('globalSearch').addEventListener('input', (e) => {
-    const qv = e.target.value.toLowerCase();
-    if (!qv) { renderTree(); showFolderContent(filesystem); return; }
-    const matches = [];
-    function walk(n) { if (n.name && n.name.toLowerCase().includes(qv)) matches.push(n); if (n.children) n.children.forEach(ch => walk(ch)); }
-    walk(filesystem);
-    if (matches.length) {
-      el('panelTitle').textContent = `Kết quả: ${matches.length}`;
-      const area = el('filesArea'); area.innerHTML = '';
-      matches.forEach(m => {
-        const c = document.createElement('div'); c.className = 'file-card'; c.innerHTML = `<div class="name">${m.name}</div><small>${m.type}</small>`; area.appendChild(c);
-      });
-    } else {
-      el('panelTitle').textContent = 'Không tìm thấy';
-      el('filesArea').innerHTML = '<div class="muted">Không có kết quả</div>';
+    const tenThuMuc = ten.trim();
+    if (tenThuMuc === ""){
+        alert("Tên thư mục không được để trống");
+        return;
     }
-  });
+    for (let i = 0; i < currentFolder.children.length; i++){
+        if (currentFolder.children[i].name === tenThuMuc){
+            alert("Tên thư mục đã tồn tại");
+            return;
+        }
+    }
+    const thuMucMoi = {
+        id: taoId(),
+        name: tenThuMuc,
+        type: "folder",
+        children: []
+    };
+    currentFolder.children.push(thuMucMoi);
+    luuFS();
+    renderTree();
+    showFolderContent(currentFolder);
+    console.log("Đã tạo thư mục:", tenThuMuc);
 }
 
+const nutThuMucMoi = document.getElementById("newfolder");
+if (nutThuMucMoi){
+    nutThuMucMoi.addEventListener("click", () => {
+        taoThuMucMoi();
+    });
+}
+function taoFileMoi(){
+    if (!currentFolder || currentFolder.type !== "folder"){
+        alert("Vui lòng chọn một thư mục");
+        return;
+    }
+
+    const ten = prompt("Nhập tên file mới:");
+    if (ten === null){
+        return; // bấm Cancel
+    }
+
+    const tenFile = ten.trim();
+    if (tenFile === ""){
+        alert("Tên file không được để trống");
+        return;
+    }
+
+    for (let i = 0; i < currentFolder.children.length; i++){
+        if (currentFolder.children[i].name === tenFile){
+            alert("Tên file đã tồn tại");
+            return;
+        }
+    }
+    const fileMoi = {
+        id: taoId(),
+        name: tenFile,
+        type: "file",
+        content: ""
+    };
+    currentFolder.children.push(fileMoi);
+    luuFS();
+    renderTree();
+    showFolderContent(currentFolder);
+
+    console.log("Đã tạo file:", tenFile);
+}
+const nutFileMoi = document.getElementById("newfile");
+if (nutFileMoi){
+    nutFileMoi.addEventListener("click", () => {
+        taoFileMoi();
+    });
+}
+//contextmenu: xoá
+function xoaNodeTrongCay(nodeCha) {
+    if (!nodeCha.children) return false;
+
+    for (let i = 0; i < nodeCha.children.length; i++) {
+        if (nodeCha.children[i].id === nodeDangChuotPhai.id) {
+            nodeCha.children.splice(i, 1);
+            return true;
+        }
+
+        if (nodeCha.children[i].type === "folder") {
+            const daXoa = xoaNodeTrongCay(nodeCha.children[i]);
+            if (daXoa) return true;
+        }
+    }
+    return false;
+}
+const nutXoa = document.getElementById("deleteOption");
+if (nutXoa) {
+    nutXoa.addEventListener("click", () => {
+        if (!nodeDangChuotPhai) return;
+
+        if (!confirm("Bạn có chắc muốn xóa?")) return;
+
+        xoaNodeTrongCay(filesystem);
+
+        nodeDangChuotPhai = null;
+        luuFS();
+        renderTree();
+        showFolderContent(currentFolder);
+    });
+}
+//contextmenu: đổi tên
+const nutDoiTen = document.getElementById("renameOption");
+
+if (nutDoiTen) {
+    nutDoiTen.addEventListener("click", () => {
+        if (!nodeDangChuotPhai) return;
+
+        const tenMoi = prompt("Nhập tên mới:", nodeDangChuotPhai.name);
+        if (tenMoi === null) return;
+
+        const tenMoiTrim = tenMoi.trim();
+        if (tenMoiTrim === "") {
+            alert("Tên không hợp lệ");
+            return;
+        }
+
+        nodeDangChuotPhai.name = tenMoiTrim;
+
+        nodeDangChuotPhai = null;
+        luuFS();
+        renderTree();
+        showFolderContent(currentFolder);
+    });
+}
+//contextmenu: mở file
+const nutMo = document.getElementById("openOption");
+if (nutMo) {
+    nutMo.addEventListener("click", () => {
+        if (!nodeDangChuotPhai) return;
+
+        if (nodeDangChuotPhai.type === "folder") {
+            currentFolder = nodeDangChuotPhai;
+            showFolderContent(currentFolder);
+        } else {
+            moFile(nodeDangChuotPhai);
+        }
+        nodeDangChuotPhai = null;
+    });
+}
+// tìm kiếm
+function tenKhop(node) {    
+    if (tuKhoaTimKiem === "") return true;
+    return node.name.toLowerCase().includes(tuKhoaTimKiem);
+}
+const oTimKiem = document.getElementById("globalSearch");
+if (oTimKiem) {
+    oTimKiem.addEventListener("input", () => {
+        tuKhoaTimKiem = oTimKiem.value.trim().toLowerCase();
+        renderTree();
+    });
+}
